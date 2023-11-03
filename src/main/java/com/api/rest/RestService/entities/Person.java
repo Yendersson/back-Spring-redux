@@ -2,6 +2,8 @@ package com.api.rest.RestService.entities;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,6 +22,7 @@ public class Person {
 	private String last_name;
 	private String email;
 	private String avatar;
+	private String password;
 	
 	public Person() {
 		
@@ -63,6 +66,15 @@ public class Person {
 
 	public void setAvatar(String avatar) {
 		this.avatar = avatar;
+	}
+	
+	@JsonIgnore
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 	@Override

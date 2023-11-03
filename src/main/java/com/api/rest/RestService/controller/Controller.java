@@ -27,6 +27,8 @@ import com.api.rest.RestService.entities.Product;
 import com.api.rest.RestService.repository.PersonRepository;
 import com.api.rest.RestService.utils.DataContainer;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
 @RestController
 @CrossOrigin(origins = "*")
 public class Controller {
@@ -40,6 +42,7 @@ public class Controller {
 			this.personRepository = personRepository;
 	}
 	
+	@ApiResponse(responseCode = "200", description = "Successfully found all")
 	@GetMapping("/api/persons")
 		public ResponseEntity<DataContainer<Person>> getPersons(){
 			List<Person> persons =personRepository.findAll();
@@ -54,6 +57,7 @@ public class Controller {
 		return ResponseEntity.ok(person.get());
 	}
 	
+	@ApiResponse(responseCode = "200", description = "Successfully found all")
 	@PostMapping("/api/persons")
 	public ResponseEntity<Person> insertPersons(@RequestBody Person person){
 		Person postPerson = personRepository.save(person);
@@ -70,7 +74,6 @@ public class Controller {
 		Person putPerson = personRepository.save(person);
 		return ResponseEntity.ok(putPerson);
 	}
-	
 	
 	//Controlar commandos desde la terminal a travez de un endpoint
 	@GetMapping("api/persons/comand")
