@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Stack;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +22,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.api.rest.RestService.entities.Audit;
 import com.api.rest.RestService.entities.Category;
 import com.api.rest.RestService.entities.Person;
 import com.api.rest.RestService.entities.Product;
+import com.api.rest.RestService.repository.AuditRespository;
 import com.api.rest.RestService.repository.PersonRepository;
 import com.api.rest.RestService.utils.DataContainer;
 
@@ -38,41 +41,76 @@ public class Controller {
 	@Autowired
 	private PersonRepository personRepository;
 	
-	public Controller(PersonRepository personRepository) {
+	@Autowired
+	private AuditRespository auditRepository;
+	
+	public Controller(PersonRepository personRepository, AuditRespository auditRepository) {
 			this.personRepository = personRepository;
+			this.auditRepository = auditRepository;
 	}
 	
-	@ApiResponse(responseCode = "200", description = "Successfully found all")
+	@ApiResponse(responseCode = "200", description = "get all the items until to date")
 	@GetMapping("/api/persons")
 		public ResponseEntity<DataContainer<Person>> getPersons(){
 			List<Person> persons =personRepository.findAll();
 			DataContainer<Person> data = new DataContainer<>(persons);
+			log.info("Good");
 			return  ResponseEntity.ok(data);
 		}
 	
 	@GetMapping("/api/persons/{id}")
 	public ResponseEntity<Person> getOnePerson(@PathVariable Long id){
 		if (!personRepository.existsById(id)) return ResponseEntity.notFound().build();
+		
 		Optional<Person> person = personRepository.findById(id);
 		return ResponseEntity.ok(person.get());
 	}
 	
-	@ApiResponse(responseCode = "200", description = "Successfully found all")
+	@ApiResponse(responseCode = "200", description = "Insert a new item")
 	@PostMapping("/api/persons")
 	public ResponseEntity<Person> insertPersons(@RequestBody Person person){
+		if (person.getId() != null) return ResponseEntity.badRequest().build();
 		Person postPerson = personRepository.save(person);
+		Audit audit = new Audit();
+		audit.setMethod("CREATE");
+		auditRepository.save(audit);
+		
 		return ResponseEntity.ok(postPerson);
 	}
 	
+	@ApiResponse(responseCode = "200", description = "Modified an item")
 	@PutMapping("/api/persons")
 	public ResponseEntity<Person> updatePersons(@RequestBody Person person){
 		
-		if (person.getId() == null) {
-			return ResponseEntity.badRequest().build();
-		}
+		if (person.getId() == null) return ResponseEntity.badRequest().build();
 		
 		Person putPerson = personRepository.save(person);
+		Audit audit = new Audit();
+		audit.setMethod("UPDATE");
+		auditRepository.save(audit);
+		
 		return ResponseEntity.ok(putPerson);
+	}
+	
+	@ApiResponse(responseCode = "204", description = "delete a item")
+	@DeleteMapping("/api/persons/{id}")
+	public ResponseEntity<Person> deletePerson(@PathVariable Long id){
+		if (!personRepository.existsById(id)) return ResponseEntity.notFound().build();
+		personRepository.deleteById(id);
+		Audit audit = new Audit();
+		audit.setMethod("DELETE");
+		auditRepository.save(audit);
+		
+		return ResponseEntity.noContent().build();
+	}
+	
+	/*****************************************************************/
+	//AUDITLOGS
+	@GetMapping("api/logs")
+	public ResponseEntity<DataContainer<Audit>> getAllAudit() {
+		List<Audit> audits = auditRepository.findAll();
+		DataContainer<Audit> aditoLog = new DataContainer<>(audits);
+		return  ResponseEntity.ok(aditoLog);
 	}
 	
 	//Controlar commandos desde la terminal a travez de un endpoint
@@ -84,37 +122,25 @@ public class Controller {
 			BufferedReader lector = new BufferedReader(new InputStreamReader(process.getInputStream()));
 			
 			 String linea;
-	            StringBuilder salida = new StringBuilder();
+			 StringBuilder salida = new StringBuilder();
 
-	            while ((linea = lector.readLine()) != null) {
-	                salida.append(linea).append("\n");
-	            }
+            while ((linea = lector.readLine()) != null) {
+                salida.append(linea).append("\n");
+            }
 
-	            int estadoSalida = process.waitFor();
+            int estadoSalida = process.waitFor();
 	            
-	            return "Salida del comando:\n" + salida.toString() + "\nEstado de salida: " + estadoSalida;
+            return "Salida del comando:\n" + salida.toString() + "\nEstado de salida: " + estadoSalida;
+            
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
 	}
 	
-	@DeleteMapping("/api/persons/{id}")
-	public ResponseEntity<Person> deletePerson(@PathVariable Long id){
-		if (!personRepository.existsById(id)) {
-			return ResponseEntity.notFound().build();
-		}
-		
-		personRepository.deleteById(id);
-		return ResponseEntity.noContent().build();
-	}
-	
 	//PRUEBA SIN BASE DE DATOS....
-	
 	Collection<Product> products = new ArrayList<>();
 	Category category1 = new Category("Categoria 1");
 	{
