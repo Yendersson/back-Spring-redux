@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Stack;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +51,7 @@ public class Controller {
 	@ApiResponse(responseCode = "200", description = "get all the items until to date")
 	@GetMapping("/api/persons")
 		public ResponseEntity<DataContainer<Person>> getPersons(){
-			List<Person> persons =personRepository.findAll();
+			List<Person> persons =personRepository.findAllActive();
 			DataContainer<Person> data = new DataContainer<>(persons);
 			log.info("Good");
 			return  ResponseEntity.ok(data);
@@ -66,7 +65,7 @@ public class Controller {
 		return ResponseEntity.ok(person.get());
 	}
 	
-	@ApiResponse(responseCode = "200", description = "Insert a new item")
+	@ApiResponse(responseCode = "204", description = "Insert a new item")
 	@PostMapping("/api/persons")
 	public ResponseEntity<Person> insertPersons(@RequestBody Person person){
 		if (person.getId() != null) return ResponseEntity.badRequest().build();
@@ -78,7 +77,7 @@ public class Controller {
 		return ResponseEntity.ok(postPerson);
 	}
 	
-	@ApiResponse(responseCode = "200", description = "Modified an item")
+	@ApiResponse(responseCode = "204", description = "Modified an item")
 	@PutMapping("/api/persons")
 	public ResponseEntity<Person> updatePersons(@RequestBody Person person){
 		
@@ -87,6 +86,7 @@ public class Controller {
 		Person putPerson = personRepository.save(person);
 		Audit audit = new Audit();
 		audit.setMethod("UPDATE");
+		audit.setTipo(putPerson.getClass().getSimpleName());
 		auditRepository.save(audit);
 		
 		return ResponseEntity.ok(putPerson);
@@ -96,7 +96,9 @@ public class Controller {
 	@DeleteMapping("/api/persons/{id}")
 	public ResponseEntity<Person> deletePerson(@PathVariable Long id){
 		if (!personRepository.existsById(id)) return ResponseEntity.notFound().build();
-		personRepository.deleteById(id);
+		Person person =  personRepository.findById(id).get();
+		person.setActive(false);
+		personRepository.save(person);
 		Audit audit = new Audit();
 		audit.setMethod("DELETE");
 		auditRepository.save(audit);
@@ -105,7 +107,7 @@ public class Controller {
 	}
 	
 	/*****************************************************************/
-	//AUDITLOGS
+	//AUDITLOGS ONLY READ
 	@GetMapping("api/logs")
 	public ResponseEntity<DataContainer<Audit>> getAllAudit() {
 		List<Audit> audits = auditRepository.findAll();

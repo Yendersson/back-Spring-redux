@@ -18,18 +18,19 @@ import jakarta.persistence.Table;
 @Table(name = "audit")
 public class Audit {
 	
-	private static LocalDateTime currentDateTime = LocalDateTime.now();
-	private static  DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
 	private String method;
 	
+	private String tipo;
+	
 	private String date;
 	
 	public Audit() {
+		LocalDateTime currentDateTime = LocalDateTime.now();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		this.date = currentDateTime.format(formatter);
 	}
 	
@@ -47,6 +48,14 @@ public class Audit {
 
 	public void setMethod(String method) {
 		this.method = method;
+	}
+	
+	public String getTipo() {
+		return tipo;
+	}
+
+	public void setTipo(String tipo) {
+		this.tipo = tipo;
 	}
 
 	public String getDate() {

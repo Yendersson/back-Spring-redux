@@ -23,9 +23,10 @@ public class Person {
 	private String email;
 	private String avatar;
 	private String password;
+	private Boolean active;
 	
 	public Person() {
-		
+		this.active = true;
 	}
 
 	public Long getId() {
@@ -75,6 +76,15 @@ public class Person {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+	
+	@JsonIgnore
+	public Boolean isActive() {
+		return active;
+	}
+
+	public void setActive(Boolean active) {
+		this.active = active;
 	}
 
 	@Override
