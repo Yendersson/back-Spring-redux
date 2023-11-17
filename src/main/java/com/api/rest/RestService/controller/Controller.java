@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,12 +20,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.api.rest.RestService.entities.Audit;
 import com.api.rest.RestService.entities.Category;
 import com.api.rest.RestService.entities.Person;
 import com.api.rest.RestService.entities.Product;
+import com.api.rest.RestService.jwt.JsonWebToken;
 import com.api.rest.RestService.repository.AuditRespository;
 import com.api.rest.RestService.repository.PersonRepository;
 import com.api.rest.RestService.utils.DataContainer;
@@ -50,11 +53,18 @@ public class Controller {
 	
 	@ApiResponse(responseCode = "200", description = "get all the items until to date")
 	@GetMapping("/api/persons")
-		public ResponseEntity<DataContainer<Person>> getPersons(){
-			List<Person> persons =personRepository.findAllActive();
-			DataContainer<Person> data = new DataContainer<>(persons);
-			log.info("Good");
-			return  ResponseEntity.ok(data);
+		public ResponseEntity<?> getPersons(@RequestHeader("Authorization") String token){
+			String processToken = token.substring(7);
+			
+			if (JsonWebToken.evaluateToken(processToken)) {
+				
+				List<Person> persons =personRepository.findAllActive();
+				DataContainer<Person> data = new DataContainer<>(persons);
+				log.info("Good");
+				return  ResponseEntity.ok(data);
+			}
+			
+			return ResponseEntity.status(403).body("Unathorizade");
 		}
 	
 	@GetMapping("/api/persons/{id}")

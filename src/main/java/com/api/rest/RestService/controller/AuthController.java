@@ -18,6 +18,7 @@ import com.api.rest.RestService.entities.Audit;
 import com.api.rest.RestService.entities.Login;
 import com.api.rest.RestService.entities.Person;
 import com.api.rest.RestService.entities.User;
+import com.api.rest.RestService.jwt.JsonWebToken;
 import com.api.rest.RestService.repository.AuditRespository;
 import com.api.rest.RestService.repository.UserRepository;
 import com.api.rest.RestService.utils.Error;
@@ -71,7 +72,7 @@ public class AuthController {
 		} 
 		
 		if (login.getPassword().equals(userAuth.getPassword())) {
-			return ResponseEntity.ok(userAuth);			
+			return ResponseEntity.ok(JsonWebToken.generateToken(userAuth));			
 		} 
 		
 		return ResponseEntity.badRequest().body(new Error("password bad"));
